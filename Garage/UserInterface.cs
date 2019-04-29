@@ -4,6 +4,8 @@ using System.Security;
 using System.Text.RegularExpressions;
 using System.Configuration;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MyGarage
 {
@@ -23,17 +25,42 @@ namespace MyGarage
                     "Läs in garage från fil" // 9
                 };
 
+        enum HeadMeny
+        {
+            Avsluta, // Måste vara först i arrayen.
+            Parkera_i_garaget, // 1
+            Kör_ut_från_garaget, // 2
+            Sök_på_registreringsnummer, // 3
+            Textsök, // 4
+            Lista_fordon_av_typ, // 5
+            Lista_alla_fordon, // 6
+            Visa_beläggningsgrad, // 7
+            Spara_garaget_till_fil, // 8
+            Läs_in_garage_från_fil // 9
+        };
+
         // En array med fordonstyper.
         string[] _vehicleTypes = {
                     "Avbryt",
-                    "Bil",
+                    "Car",
                     "Buss",
                     "Båt",
                     "Flygplan",
                     "Motorcykel"
                 };
-        
+
+        enum vehicleTypes
+        {
+            Avbryt,
+            Car,
+            Buss,
+            Båt,
+            Flygplan,
+            Motorcykel
+        };
+
         IGarageManager _garageManager;
+        private Dictionary<int, Action> headMenyDict;
 
         public UserInterface()
         {
@@ -52,7 +79,7 @@ namespace MyGarage
         public bool Create()
         {
             bool inputOk = false;
-            
+
             while (!inputOk)
             {
                 Console.Clear();
@@ -76,13 +103,13 @@ namespace MyGarage
                         if (size > 0)
                         {
                             _garageManager = ManagerFactory.Create(size);
-                           // var manager = ConfigurationManager.AppSettings["Manager"];
-                           // var type = Assembly.GetExecutingAssembly().GetType(manager);
-                           //// Type type = Type.GetType(manager +", " + assambly);
-                           //_garageManager = (GarageManager)Activator.CreateInstance(type, size); //GarageManager;
-                           //  _garageManager = assambly.CreateInstance(manager) as GarageManager;
-                          //  _garageManager.AddSize(size);
-                           // _garageManager = new GarageManager(size);
+                            // var manager = ConfigurationManager.AppSettings["Manager"];
+                            // var type = Assembly.GetExecutingAssembly().GetType(manager);
+                            //// Type type = Type.GetType(manager +", " + assambly);
+                            //_garageManager = (GarageManager)Activator.CreateInstance(type, size); //GarageManager;
+                            //  _garageManager = assambly.CreateInstance(manager) as GarageManager;
+                            //  _garageManager.AddSize(size);
+                            // _garageManager = new GarageManager(size);
                             inputOk = true;
                         }
 
@@ -90,7 +117,7 @@ namespace MyGarage
                         break;
                     case '2':
                         _garageManager = new GarageManager(1);
-                        if(LoadGarage())
+                        if (LoadGarage())
                             inputOk = true;
                         promptForAnyKey();
                         break;
@@ -110,12 +137,13 @@ namespace MyGarage
             while (true)
             {
                 ShowMenu();
-                switch(Console.ReadKey(true).KeyChar)
+                switch (Console.ReadKey(true).KeyChar)
                 {
                     case '0':
                         return; // Avslutar programmet.
                     case '1': // Parkera.
-                        ParkVehicle();
+                        headMenyDict[1].Invoke();
+                        //ParkVehicle();
                         promptForAnyKey();
                         break;
                     case '2': // Kör ut.
@@ -136,7 +164,7 @@ namespace MyGarage
                         break;
                     case '6': // Lista alla.
                         Console.Clear();
-                        foreach(string space in _garageManager.GetAllSpaces())
+                        foreach (string space in _garageManager.GetAllSpaces())
                             Console.WriteLine(space);
                         promptForAnyKey();
                         break;
@@ -178,11 +206,11 @@ namespace MyGarage
             {
                 Console.Error.WriteLine("Behörighet saknas för att läsa in garage: {0}", ex.Message);
             }
-            catch(FileNotFoundException ex)
+            catch (FileNotFoundException ex)
             {
                 Console.Error.WriteLine("Filen kan inte hittas: {0}", ex.Message);
             }
-            catch(IOException ex)
+            catch (IOException ex)
             {
                 Console.Error.WriteLine("Misslyckades att läsa filen: {0}", ex.Message);
             }
@@ -226,9 +254,9 @@ namespace MyGarage
         {
             Console.Clear();
             string input = promptForStringInput("Skriv in sökord: ");
-            
+
             Vehicle[] vehicles = _garageManager.FindVehicleByString(input);
-            if(vehicles.Length > 0)
+            if (vehicles.Length > 0)
                 foreach (Vehicle v in vehicles)
                     Console.WriteLine(v);
             else
@@ -245,7 +273,7 @@ namespace MyGarage
 
             Console.Clear();
 
-            while(true)
+            while (true)
             {
                 ShowVehicleTypeSelectMenu("Välj fordonstyp att söka efer.");
                 char c = Console.ReadKey(true).KeyChar;
@@ -310,7 +338,7 @@ namespace MyGarage
                 if (!string.IsNullOrWhiteSpace(input))
                 {
                     vehicle = _garageManager.FindVehicleByRegNum(input.ToUpper());
-                    if(vehicle != null)
+                    if (vehicle != null)
                         Console.WriteLine(vehicle);
                     else
                         Console.WriteLine("Fordonet '{0}' finns inte i garaget.", input);
@@ -333,7 +361,8 @@ namespace MyGarage
                 "(Tryck ENTER för att se alla fordon)> ",
                 Environment.NewLine);
 
-            do {
+            do
+            {
                 input = promptForStringInput(prompt);
                 if (string.IsNullOrWhiteSpace(input))
                 {
@@ -352,7 +381,7 @@ namespace MyGarage
                         input = "";
                     }
                 }
-            } while(string.IsNullOrWhiteSpace(input));
+            } while (string.IsNullOrWhiteSpace(input));
         }
 
         /// <summary>
@@ -364,23 +393,25 @@ namespace MyGarage
             bool b1, b2;
             Vehicle vehicleParams;
 
-            if(!_garageManager.HasFreeSpace())
+            if (!_garageManager.HasFreeSpace())
             {
                 Console.WriteLine(Environment.NewLine + "Garaget är fullt.");
                 return;
             }
 
             ShowVehicleTypeSelectMenu("Vilken typ av fordon vill du parkera?");
-
-            switch(Console.ReadKey(true).KeyChar)
+            var input = Console.ReadKey(true).KeyChar;
+            switch (input)
             {
                 case '0':
                     return; // Tillbaka till huvudmenyn.
                 case '1': // Bil
-                    vehicleParams = GetCommonVehicleParams();
-                    while ((n1 = promptForNumberInput("Cylinderantal: ")) == -1) ;
-                    while ((n2 = promptForNumberInput("Cylindervolym: ")) == -1) ;
-                    _garageManager.ParkVehicle(new Car(vehicleParams, n1, n2));
+                    var v = CreateVehicle((vehicleTypes)int.Parse(input.ToString()));
+                    //vehicleParams = GetCommonVehicleParams();
+                    //while ((n1 = promptForNumberInput("Cylinderantal: ")) == -1) ;
+                    //while ((n2 = promptForNumberInput("Cylindervolym: ")) == -1) ;
+                    //_garageManager.ParkVehicle(new Car(vehicleParams, n1, n2));
+                    _garageManager.ParkVehicle(v);
                     break;
                 case '2': // Buss
                     vehicleParams = GetCommonVehicleParams();
@@ -412,6 +443,36 @@ namespace MyGarage
             }
         }
 
+        private Vehicle CreateVehicle(vehicleTypes vehicleTypes)
+        {
+            var vehicle = vehicleTypes.ToString();
+            var type = Type.GetType("MyGarage." + vehicle);
+            var r =(Vehicle) Activator.CreateInstance(type);
+            PropsInfo[] props = r.GetProps(); 
+            foreach (var prop in props)
+            {
+                switch (prop.DataType)
+                {
+                    case "Int32":
+                        var intin = promptForNumberInput(prop.Name);
+                        r.GetType().GetProperty(prop.Name).SetValue(r, intin);
+                        break;
+                    case "String":
+                        r.SetProp(prop.Name, promptForStringInput(prop.Name));
+                        break;
+
+                    default:
+                        break;
+                }
+
+            }
+            Console.WriteLine(r);
+            Console.ReadLine();
+            return r;
+
+
+        }
+
         /// <summary>
         /// Visar meny för att välja fordonstyp.
         /// </summary>
@@ -423,11 +484,17 @@ namespace MyGarage
                 "{0}{1}{0}",
                 Environment.NewLine, prompt);
 
-            for (int i = 1; i < _vehicleTypes.Length; i++)
+
+            foreach (var item in Enum.GetValues(typeof(vehicleTypes)))
             {
-                Console.WriteLine(" {0}) {1}", i, _vehicleTypes[i]);
+                Console.WriteLine($" {(int)item}) {item.ToString().Replace('_', ' ')}");
             }
-            Console.WriteLine(" {0}) {1}", 0, _vehicleTypes[0]);
+
+            //for (int i = 1; i < _vehicleTypes.Length; i++)
+            //{
+            //    Console.WriteLine(" {0}) {1}", i, _vehicleTypes[i]);
+            //}
+            //Console.WriteLine(" {0}) {1}", 0, _vehicleTypes[0]);
 
             Console.Write(Environment.NewLine + "> ");
         }
@@ -451,7 +518,7 @@ namespace MyGarage
             string input;
             Console.Write(prompt);
             input = Console.ReadLine().ToUpper();
-            if(input == "Y" || input == "YES" || input == "J" || input == "JA")
+            if (input == "Y" || input == "YES" || input == "J" || input == "JA")
                 return true;
 
             return false;
@@ -464,7 +531,7 @@ namespace MyGarage
         /// <returns>Texten som användaren skrev in som string.</returns>
         private string promptForStringInput(string prompt)
         {
-            Console.Write(prompt);
+            Console.Write(prompt + ": ");
             return Console.ReadLine();
 
         }
@@ -477,7 +544,7 @@ namespace MyGarage
         private int promptForNumberInput(string prompt)
         {
             string input;
-            Console.Write(prompt);
+            Console.Write(prompt + ": ");
             input = Console.ReadLine();
             try
             {
@@ -513,13 +580,14 @@ namespace MyGarage
 
             Console.Clear();
             Console.WriteLine(Environment.NewLine + "Skriv in uppgifter om fordonet");
-            do {
+            do
+            {
                 Console.Write("Registreringsnummer: ");
                 input = Console.ReadLine().ToUpper();
                 validateOK = ValidateRegNum(input);
-                if(!validateOK)
+                if (!validateOK)
                     Console.WriteLine("'{0}' är inte ett giltigt registreringsnummer.", input);
-            } while(!validateOK);
+            } while (!validateOK);
             regNum = input;
 
             validateOK = false;
@@ -532,11 +600,11 @@ namespace MyGarage
                     wheelCount = int.Parse(input);
                     validateOK = true;
                 }
-                catch(ArgumentNullException ex)
+                catch (ArgumentNullException ex)
                 {
                     Console.Error.WriteLine("Du måste ange ett värde: {0}", ex.Message);
                 }
-                catch(FormatException ex)
+                catch (FormatException ex)
                 {
                     Console.Error.WriteLine("Du kan endast ange siffror: {0}", ex.Message);
                 }
@@ -575,13 +643,37 @@ namespace MyGarage
                 "=========",
                 Environment.NewLine);
 
-            for (int i = 1; i < _menuItems.Length; i++)
+            //for (int i = 1; i < _menuItems.Length; i++)
+            //{
+            //    Console.WriteLine(" {0}) {1}", i, _menuItems[i]);
+            //}
+            //Console.WriteLine(" {0}) {1}", 0, _menuItems[0]);
+            headMenyDict = new Dictionary<int, Action>();
+            foreach (var item in (int[])Enum.GetValues(typeof(HeadMeny)))//Enum.GetValues(typeof(HeadMeny)))
             {
-                Console.WriteLine(" {0}) {1}", i, _menuItems[i]);
+                var temp = (HeadMeny)item;
+                Console.WriteLine($" {item}) {temp.ToString().Replace('_', ' ')}");
+
+                headMenyDict.Add(item, null);
             }
-            Console.WriteLine(" {0}) {1}", 0, _menuItems[0]);
+
+            headMenyDict[0] = Exit;
+            headMenyDict[1] = ParkVehicle;
+            headMenyDict[2] = LeaveGarage;
+            headMenyDict[3] = FindVehicleByRegNum;
+            headMenyDict[4] = FindVehicle;
+            headMenyDict[5] = ListAllVehicles;
+            headMenyDict[6] = PrintStats;
+            //headMenyDict[7] = SaveGarage;
+            //headMenyDict[8] = LoadGarage;
 
             Console.Write(Environment.NewLine + "> ");
+
+        }
+
+        private void Exit()
+        {
+            return;
         }
 
         /// <summary>
@@ -603,12 +695,26 @@ namespace MyGarage
             Regex regNumSeStdRegexp = new Regex(@"[A-HJ-PR-UW-Z]{3}\d{3}$"); // Tre bokstäver, A-Z förutom I, Q & V följt av tre siffror 0-9.
             Regex regNumSePersonalRegexp = new Regex(@"^([ A-Ö0-9]{2,7}|(?![A-Z]{3}\d{3}))$"); // Två till sju tecken, A-Ö, 0-9 samt blanktecken.
 
-            if(regNumSeStdRegexp.IsMatch(regNum))
+            if (regNumSeStdRegexp.IsMatch(regNum))
                 return true;
             //else if(regNumSePersonalRegexp.IsMatch(regNum))
             //    return true;
             else
                 return false;
+        }
+
+
+        private void PrintStats()
+        {
+            Console.Clear();
+            Console.WriteLine(_garageManager.GetStatistics());
+        }
+
+        private void ListAllVehicles()
+        {
+            Console.Clear();
+            foreach (string space in _garageManager.GetAllSpaces())
+                Console.WriteLine(space);
         }
     }
 }

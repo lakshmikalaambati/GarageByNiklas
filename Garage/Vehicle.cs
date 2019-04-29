@@ -4,15 +4,15 @@ using System.Linq;
 namespace MyGarage
 {
     [Serializable]
-    class Vehicle : ITextSearchable
+    public class Vehicle : ITextSearchable
     {
         string _regNum;
         string _color;
         int _wheelCount;
 
-        public string RegNum { get { return _regNum; }  }
-        public string Color { get { return _color; }  }
-        public int WheelCount { get { return _wheelCount; }  }
+        public string RegNum { get { return _regNum; }  set { _regNum = value; } }
+        public string Color { get { return _color; }  set { _color = value; } }
+        public int WheelCount { get { return _wheelCount; }  set { _wheelCount = value; } }
 
        // public PropsInfo[] props;
 
@@ -24,6 +24,10 @@ namespace MyGarage
            
         }
 
+        public Vehicle()
+        {
+
+        }
         public Vehicle(Vehicle c)
         {
             _regNum = c.RegNum;
@@ -49,6 +53,13 @@ namespace MyGarage
             var props = this.GetType().GetProperties();
             return props.Select(p => new PropsInfo{ Name = p.Name, DataType = p.PropertyType.Name } ).OrderByDescending(p => p.Name).Reverse().ToArray();
            
+        }
+
+        internal virtual void SetProp(object name, object value)
+        {
+            var a = this.GetType();
+            var b = a.GetProperty(name.ToString());
+            b.SetValue(this, value);
         }
     }
 }

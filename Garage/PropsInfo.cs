@@ -2,7 +2,7 @@
 
 namespace MyGarage
 {
-    internal class PropsInfo
+    public class PropsInfo
     {
         public string Name { get; set; }
         public string DataType { get; set; }

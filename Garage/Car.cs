@@ -3,7 +3,7 @@ using System;
 namespace MyGarage
 {
     [Serializable]
-    class Car : Vehicle
+    public class Car : Vehicle
     {
         public int CylinderCount { get; private set;  }
         public int EngineSize { get; private set;  }
@@ -20,6 +20,11 @@ namespace MyGarage
         {
             CylinderCount = cylinderCount;
             EngineSize = engineSize;
+        }
+
+        public Car()
+        {
+
         }
 
         public override string ToString()
