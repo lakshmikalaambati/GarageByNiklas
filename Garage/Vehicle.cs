@@ -14,7 +14,6 @@ namespace MyGarage
         public string Color { get { return _color; }  set { _color = value; } }
         public int WheelCount { get { return _wheelCount; }  set { _wheelCount = value; } }
 
-       // public PropsInfo[] props;
 
         public Vehicle(string regNum, string color, int wheelCount)
         {
@@ -28,6 +27,7 @@ namespace MyGarage
         {
 
         }
+
         public Vehicle(Vehicle c)
         {
             _regNum = c.RegNum;
@@ -48,18 +48,5 @@ namespace MyGarage
             return false;
         }
 
-        public virtual PropsInfo[] GetProps()
-        {
-            var props = this.GetType().GetProperties();
-            return props.Select(p => new PropsInfo{ Name = p.Name, DataType = p.PropertyType.Name } ).OrderByDescending(p => p.Name).Reverse().ToArray();
-           
-        }
-
-        internal virtual void SetProp(object name, object value)
-        {
-            var a = this.GetType();
-            var b = a.GetProperty(name.ToString());
-            b.SetValue(this, value);
-        }
     }
 }

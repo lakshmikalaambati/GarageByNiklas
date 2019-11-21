@@ -14,9 +14,9 @@ namespace MyGarage
     /// </summary>
     /// <typeparam name="T">Garage kan bara vara av typen Garage&lt;Vehicle%gt;</typeparam>
     [Serializable]
-    class Garage<T> : IEnumerable where T : Vehicle
+    class Garage<T> : IEnumerable<T> where T : Vehicle
     {
-
+        
         T[] _spaces; // En array med parkeringsplatser.
         int _count = 0; // Räknare för antal fordon.
         public int Size { get { return _spaces.Length; } } // Storleken på garaget.
@@ -27,11 +27,7 @@ namespace MyGarage
             _spaces = new T[size];
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            for (int i = 0; i < _spaces.Length; i++)
-                if (_spaces[i] != null) yield return _spaces[i];
-        }
+        public T this[int index] => _spaces[index];
 
         /// <summary>
         /// Lägger till ett fordon i garaget.
@@ -163,6 +159,18 @@ namespace MyGarage
                 //}
             }
             return vehicles;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < _spaces.Length; i++)
+                if (_spaces[i] != null) yield return _spaces[i];
+            
         }
     }
 }

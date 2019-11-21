@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace MyGarage
@@ -67,7 +68,7 @@ namespace MyGarage
 
         public string[] GetAllSpaces()
         {
-            Vehicle[] vehicle = _garage.GetAll();
+            Vehicle[] vehicle = _garage.ToArray();           //_garage.GetAll();
             string[] result = new string[vehicle.Length];
             for (int i = 0; i < vehicle.Length; i++)
                 if (vehicle[i] == null)
@@ -81,13 +82,22 @@ namespace MyGarage
 
         public string GetStatistics()
         {
+            var result = _garage.GroupBy(v => v.GetType().Name)
+                                       .Select(v => new
+                                       {
+                                           TypeName = v.Key,
+                                           Count = v.Count()
+                                       }).ToList();
+
+            result.ForEach(r => Console.WriteLine(r.TypeName));
+
             Dictionary<string, int> types = new Dictionary<string, int>();
             Vehicle[] vehicle = _garage.GetAll();
             int n;
 
             for (int i = 0; i < vehicle.Length; i++)
             {
-                if (vehicle[i] != null)
+                if (_garage[i] != null)
                 {
                     string typeName = vehicle[i].GetType().Name;
                     if (types.ContainsKey(typeName))

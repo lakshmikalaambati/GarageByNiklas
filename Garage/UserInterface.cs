@@ -27,7 +27,7 @@ namespace MyGarage
 
         enum HeadMeny
         {
-            Avsluta, // Måste vara först i arrayen.
+            Avsluta , // Måste vara först i arrayen.
             Parkera_i_garaget, // 1
             Kör_ut_från_garaget, // 2
             Sök_på_registreringsnummer, // 3
@@ -103,13 +103,6 @@ namespace MyGarage
                         if (size > 0)
                         {
                             _garageManager = ManagerFactory.Create(size);
-                            // var manager = ConfigurationManager.AppSettings["Manager"];
-                            // var type = Assembly.GetExecutingAssembly().GetType(manager);
-                            //// Type type = Type.GetType(manager +", " + assambly);
-                            //_garageManager = (GarageManager)Activator.CreateInstance(type, size); //GarageManager;
-                            //  _garageManager = assambly.CreateInstance(manager) as GarageManager;
-                            //  _garageManager.AddSize(size);
-                            // _garageManager = new GarageManager(size);
                             inputOk = true;
                         }
 
@@ -143,7 +136,7 @@ namespace MyGarage
                         return; // Avslutar programmet.
                     case '1': // Parkera.
                         headMenyDict[1].Invoke();
-                        //ParkVehicle();
+                        ParkVehicle();
                         promptForAnyKey();
                         break;
                     case '2': // Kör ut.
@@ -406,12 +399,10 @@ namespace MyGarage
                 case '0':
                     return; // Tillbaka till huvudmenyn.
                 case '1': // Bil
-                    var v = CreateVehicle((vehicleTypes)int.Parse(input.ToString()));
-                    //vehicleParams = GetCommonVehicleParams();
-                    //while ((n1 = promptForNumberInput("Cylinderantal: ")) == -1) ;
-                    //while ((n2 = promptForNumberInput("Cylindervolym: ")) == -1) ;
-                    //_garageManager.ParkVehicle(new Car(vehicleParams, n1, n2));
-                    _garageManager.ParkVehicle(v);
+                    vehicleParams = GetCommonVehicleParams();
+                    while ((n1 = promptForNumberInput("Cylinderantal: ")) == -1) ;
+                    while ((n2 = promptForNumberInput("Cylindervolym: ")) == -1) ;
+                    _garageManager.ParkVehicle(new Car(vehicleParams, n1, n2));
                     break;
                 case '2': // Buss
                     vehicleParams = GetCommonVehicleParams();
@@ -443,35 +434,7 @@ namespace MyGarage
             }
         }
 
-        private Vehicle CreateVehicle(vehicleTypes vehicleTypes)
-        {
-            var vehicle = vehicleTypes.ToString();
-            var type = Type.GetType("MyGarage." + vehicle);
-            var r =(Vehicle) Activator.CreateInstance(type);
-            PropsInfo[] props = r.GetProps(); 
-            foreach (var prop in props)
-            {
-                switch (prop.DataType)
-                {
-                    case "Int32":
-                        var intin = promptForNumberInput(prop.Name);
-                        r.GetType().GetProperty(prop.Name).SetValue(r, intin);
-                        break;
-                    case "String":
-                        r.SetProp(prop.Name, promptForStringInput(prop.Name));
-                        break;
-
-                    default:
-                        break;
-                }
-
-            }
-            Console.WriteLine(r);
-            Console.ReadLine();
-            return r;
-
-
-        }
+      
 
         /// <summary>
         /// Visar meny för att välja fordonstyp.
@@ -643,13 +606,10 @@ namespace MyGarage
                 "=========",
                 Environment.NewLine);
 
-            //for (int i = 1; i < _menuItems.Length; i++)
-            //{
-            //    Console.WriteLine(" {0}) {1}", i, _menuItems[i]);
-            //}
-            //Console.WriteLine(" {0}) {1}", 0, _menuItems[0]);
+          
             headMenyDict = new Dictionary<int, Action>();
-            foreach (var item in (int[])Enum.GetValues(typeof(HeadMeny)))//Enum.GetValues(typeof(HeadMeny)))
+
+            foreach (var item in (int[])Enum.GetValues(typeof(HeadMeny)))
             {
                 var temp = (HeadMeny)item;
                 Console.WriteLine($" {item}) {temp.ToString().Replace('_', ' ')}");
